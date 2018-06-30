@@ -1,0 +1,9 @@
+Options +FollowSymLinks
+IndexIgnore */*
+RewriteEngine on
+
+RewriteCond %{REQUEST_URI} ^/Yii2-advanced-HomeWork/admin
+RewriteRule ^admin\/?(.*) /Yii2-advanced-HomeWork/backend/web/$1
+
+RewriteCond %{REQUEST_URI} !^/Yii2-advanced-HomeWork/(frontend/web|backend/web|admin)
+RewriteRule (.*) /Yii2-advanced-HomeWork/frontend/web/$1
