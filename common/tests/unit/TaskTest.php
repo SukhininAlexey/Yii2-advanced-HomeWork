@@ -19,8 +19,10 @@ class TaskTest extends \Codeception\Test\Unit
             'user_id' =>  1,
             'leader_id' => 1,
             'resolve_date' => 999,
+            'project_id' => 1,
         ]);
         $task->save();
+        var_dump($task);
     }
 
     protected function _after()
@@ -42,5 +44,6 @@ class TaskTest extends \Codeception\Test\Unit
         $this->assertEquals(1, $task->user_id);
         $this->assertEquals(1, $task->leader_id);
         $this->assertEquals(999, $task->resolve_date);
+        $this->assertEquals(1, $task->project_id);
     }
 }

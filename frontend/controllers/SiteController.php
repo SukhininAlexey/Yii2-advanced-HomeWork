@@ -155,7 +155,6 @@ class SiteController extends Controller
             if ($user = $model->signup()) {
                 if (Yii::$app->getUser()->login($user)) {
                     var_dump(Yii::$app->user->id);
-                    var_dump(Yii::$app->user);exit;
                     return $this->goHome();
                 }
             }
