@@ -1,6 +1,10 @@
 <?php
 return [
     'components' => [
+        'bot' => [
+            'class' => \SonkoDmitry\Yii\TelegramBot\Component::class,
+            'apiToken' => '650596667:AAFZNHA2_uiQIiE2k34w_di6hIVedL1Cc_M',
+        ],
         'db' => [
             'class' => 'yii\db\Connection',
             'dsn' => 'mysql:host=localhost;dbname=yii2_task_tracker',
