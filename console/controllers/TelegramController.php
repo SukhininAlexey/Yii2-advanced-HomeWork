@@ -109,7 +109,7 @@ class TelegramController extends Controller{
         
         //Отправка сообщений с обновлением тасков.
         foreach ($newTasks as $taskKey => $task) {
-            $responce = "Было обновлено задание: " . $task->name;
+            $responce = "Проект был обновлен заданием: " . $task->name;
             $subs = \common\models\tables\TelegramSub::find()
                     ->where(['project_id' => $task->project_id])
                     ->all();
