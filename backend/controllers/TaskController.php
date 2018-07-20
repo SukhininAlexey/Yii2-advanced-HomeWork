@@ -52,9 +52,48 @@ class TaskController extends Controller
      */
     public function actionView($id)
     {
+        // Получаю необходимую информацию
+        $url = \yii\helpers\Url::to();
+        $task = $this->findModel($id);
+        $entity = [
+            'task' => $task,
+            'url' => $url,
+        ];
+        
+        // Хранить всё буду в сессии
+        $session = Yii::$app->session;
+        
+        // Проверяю, создан ли ключ и создаю его, если нужно
+        if(!isset($session['lastUrls'])){
+            $session['lastUrls'] = [];
+        }
+        
+        $lastUrls = $session->get('lastUrls');
+        
+        // Добавляю новую запись в начало массива
+        array_unshift($lastUrls, $entity);
+        
+        // Удаляю лишнние последние записи в конце
+        if(count($lastUrls)>5) {
+            array_splice($lastUrls, 5);
+        }
+        
+        // Обновляю ключи и сохраняю в сессию
+        $session['lastUrls'] = array_values($lastUrls);
+        
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $task,
         ]);
+    }
+    
+    public function actionTest()
+    {
+        var_dump(Yii::$app->session->get('lastUrls')); exit;
+    }
+    
+    public function actionRemove()
+    {
+        var_dump(Yii::$app->session->remove('lastUrls')); exit;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
+use yii\helpers\ArrayHelper;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\task\Task */
@@ -10,6 +11,15 @@ $this->title = $model->name;
 $this->params['breadcrumbs'][] = ['label' => 'Tasks', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+
+<?php
+
+$lastUrls = Yii::$app->session['lastUrls'];
+foreach ($lastUrls as $key => $value) {
+    echo Html::a(ArrayHelper::getValue($value, 'task.name'), $value['url']) . '<br>';
+}
+?>
+
 <div class="task-view">
 
     <h1><?= Html::encode($this->title) ?></h1>
