@@ -38,12 +38,65 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]) ?>
     
-    <h1><?= Html::encode("{$model->name} actions:") ?></h1>
+    <h1><?= Html::encode("{$model->name} team:") ?></h1>
+    <p>
+        <?= Html::a(
+                    'Add user', 
+                    ['member/create', 'project_id' => $model->id], 
+                    ['class' => 'btn btn-success']
+                ) ?>
+    </p>
+
+    <?php Pjax::begin(); ?>
+    <?= GridView::widget([
+        'dataProvider' => $userDataProvider,
+        'filterModel' => $userSearchModel,
+        'columns' => [
+            ['class' => 'yii\grid\SerialColumn'],
+
+            'id',
+            'username',
+            'email:email',
+            //'status',
+            //'created_at',
+            //'updated_at',
+
+            [
+                'class' => 'yii\grid\ActionColumn',
+                'template' => '{delete}',
+                'buttons' => [
+                    'delete' => function ($url, $user, $key) use ($model) {
+                        return Html::a('', 
+                                ['member/delete'], 
+                                [
+                                    'data-method' => 'POST',
+                                    'data-params' => [
+                                        'user_id' => $user->id,
+                                        'project_id' => $model->id,
+                                    ],
+                                    'class' => 'glyphicon glyphicon-trash'
+                                ]);
+                    }
+                ],
+            ],
+        ],
+    ]); ?>
+    <?php Pjax::end(); ?>
+    
+    
+    <h1><?= Html::encode("{$model->name} tasks:") ?></h1>
+    <p>
+        <?= Html::a(
+                    'Add task', 
+                    ['task/create', 'project_id' => $model->id], 
+                    ['class' => 'btn btn-success']
+                ) ?>
+    </p>
     
     <?php Pjax::begin(); ?>
     <?= GridView::widget([
-        'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
+        'dataProvider' => $actionDataProvider,
+        'filterModel' => $actionSearchModel,
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
             'id',
@@ -57,7 +110,29 @@ $this->params['breadcrumbs'][] = $this->title;
             //'resolve_date',
             
 
-            ['class' => 'yii\grid\ActionColumn'],
+            [
+                'class' => 'yii\grid\ActionColumn',
+                'buttons' => [
+                    'delete' => function ($url, $task, $key) use ($model) {
+                        return Html::a('', 
+                                ['task/delete'], 
+                                [
+                                    'data-method' => 'POST',
+                                    'data-params' => [
+                                        'task_id' => $task->id,
+                                        'project_id' => $model->id,
+                                    ],
+                                    'class' => 'glyphicon glyphicon-trash'
+                                ]);
+                    },
+                    'update' => function ($url, $task, $key) use ($model) {
+                        return Html::a('', 
+                                ['task/update', 'task_id' => $task->id, 'project_id' => $model->id], 
+                                ['class' => 'glyphicon glyphicon-pencil']
+                            );
+                    }
+                ],
+            ],
         ],
     ]); ?>
     <?php Pjax::end(); ?>

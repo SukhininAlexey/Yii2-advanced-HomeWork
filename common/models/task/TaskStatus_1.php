@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models;
+namespace frontend\models;
 
 use Yii;
 
@@ -12,7 +12,7 @@ use Yii;
  *
  * @property Task[] $tasks
  */
-class TaskStatus extends \yii\db\ActiveRecord
+class _old_TaskStatus extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}

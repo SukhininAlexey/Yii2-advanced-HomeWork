@@ -15,12 +15,8 @@ use yii\widgets\ActiveForm;
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
     
     <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
-    
-    <?= $form->field($model, 'project_id')->textInput() ?>
 
-    <?= $form->field($model, 'user_id')->textInput() ?>
-
-    <?= $form->field($model, 'leader_id')->textInput() ?>
+    <?= $form->field($model, 'user_id')->dropDownList($currentUserNames) ?>
 
     <?= $form->field($model, 'date')->textInput(['maxlength' => true]) ?>
 

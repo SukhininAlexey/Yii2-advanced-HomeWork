@@ -6,6 +6,7 @@ use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Project;
+use yii\helpers\ArrayHelper;
 
 /**
  * ProjectSearch represents the model behind the search form of `common\models\Project`.
@@ -57,6 +58,18 @@ class ProjectSearch extends Project
             // $query->where('0=1');
             return $dataProvider;
         }
+        
+        // Показываю только те проекты, которые имеют отношение к юзеру (лидершип, или участие)
+        $hostUser = Yii::$app->user->id;
+        
+        $projsArray = \common\models\Member::getUserProjects($hostUser);
+        $projsIds = ArrayHelper::getColumn($projsArray, 'project_id');
+        
+        $query->orWhere([
+            'or',
+            ['leader_id' => $hostUser],
+            ['id' => $projsIds],
+        ]);
 
         // grid filtering conditions
         $query->andFilterWhere([

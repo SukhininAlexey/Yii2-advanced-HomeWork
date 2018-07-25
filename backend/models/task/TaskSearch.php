@@ -57,6 +57,22 @@ class TaskSearch extends Task
             // $query->where('0=1');
             return $dataProvider;
         }
+        
+        // Показываю только те проекты, которые имеют отношение к проектам, к которым подтянут юзер
+        $hostUser = Yii::$app->user->id;
+        /*
+        $projsArray = \common\models\Member::getUserProjects($hostUser);
+        $projsIds = ArrayHelper::getColumn($projsArray, 'project_id');
+         * 
+         */
+        
+        // Ищем те задания, где юзер лидер, ответственный или где ID проекта соответствует тому, где мы есть
+        $query->orWhere([
+            'or',
+            ['leader_id' => $hostUser],
+            ['user_id' => $hostUser],
+            ['project_id' => $projectId],
+        ]);
 
         // grid filtering conditions
         // Если при вызове метода задан id проекта, то фильтравать по проектам нелья, т.к. мы в интерфейсе проекта

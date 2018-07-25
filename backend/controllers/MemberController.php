@@ -3,18 +3,18 @@
 namespace backend\controllers;
 
 use Yii;
-use common\models\Project;
-use backend\models\ProjectSearch;
+use common\models\Member;
+use backend\models\MemberSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-
-use backend\models\task\TaskSearch;
+use yii\helpers\ArrayHelper;
+use common\models\User;
 
 /**
- * ProjectController implements the CRUD actions for Project model.
+ * MemberController implements the CRUD actions for Member model.
  */
-class ProjectController extends Controller
+class MemberController extends Controller
 {
     /**
      * {@inheritdoc}
@@ -32,13 +32,12 @@ class ProjectController extends Controller
     }
 
     /**
-     * Lists all Project models.
+     * Lists all Member models.
      * @return mixed
      */
     public function actionIndex()
     {
-        
-        $searchModel = new ProjectSearch();
+        $searchModel = new MemberSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
@@ -48,69 +47,66 @@ class ProjectController extends Controller
     }
 
     /**
-     * Displays a single Project model.
+     * Displays a single Member model.
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */
     public function actionView($id)
     {
-        // Проверка на причастность к проекту
-        $project = \common\models\Project::findOne($id);
-        $member = \common\models\Member::findOne(['user_id' => Yii::$app->user->id, 'project_id' => $id]);
-        if($project->leader_id != Yii::$app->user->id && $member == NULL){
-            return $this->redirect(['project/index', 'id' => $id]);
-        }
-        
-        $actionSearchModel = new TaskSearch();
-        $actionDataProvider = $actionSearchModel->search(Yii::$app->request->queryParams, $id);
-        
-        $userSearchModel = new \backend\models\TeamSearch();
-        $userDataProvider = $userSearchModel->search(Yii::$app->request->queryParams, $id);
-        
         return $this->render('view', [
             'model' => $this->findModel($id),
-            'actionSearchModel' => $actionSearchModel,
-            'actionDataProvider' => $actionDataProvider,
-            'userSearchModel' => $userSearchModel,
-            'userDataProvider' => $userDataProvider,
         ]);
     }
 
     /**
-     * Creates a new Project model.
+     * Creates a new Member model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    public function actionCreate()
+    public function actionCreate($project_id)
     {
-        // Нужна проверка уровня доступа
         
-        $model = new Project();
+        // Проверка на лидерство над проектом
+        $project = \common\models\Project::findOne($project_id);
+        if($project->leader_id != Yii::$app->user->id){
+            return $this->redirect(['project/view', 'id' => $project_id]);
+        }
+        
+        $model = new Member();
+        
+        $possibleUserArr = Member::getProjPossibleUsersArr($project_id);
+        
+        $possibleUserNames = ArrayHelper::map($possibleUserArr, 'id', 'username');
+        
+        // Id проекта жестко определен
+        $model->project_id = $project_id;
+        
+        if (
+                $model->load(Yii::$app->request->post()) 
+                && $model->save() 
+                && ArrayHelper::keyExists($model->user_id, $possibleUserNames
+            )) {
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            return $this->redirect(['project/view', 'id' => $project_id]);
         }
 
         return $this->render('create', [
             'model' => $model,
+            'possibleUserNames' => $possibleUserNames,
         ]);
     }
 
     /**
-     * Updates an existing Project model.
+     * Updates an existing Member model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */
     public function actionUpdate($id)
-    {        
-        // Проверка на лидерство над проектом
+    {
         $model = $this->findModel($id);
-        if($model->leader_id != Yii::$app->user->id){
-            return $this->redirect(['project/view', 'id' => $id]);
-        }
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
@@ -122,35 +118,47 @@ class ProjectController extends Controller
     }
 
     /**
-     * Deletes an existing Project model.
+     * Deletes an existing Member model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionDelete($id)
+    public function actionAdminelete($id)
     {
-        // Проверка на лидерство над проектом
-        $project = $this->findModel($id);
-        if($project->leader_id != Yii::$app->user->id){
-            return $this->redirect(['project/view', 'id' => $id]);
-        }
-        
-        $project->delete();
+        $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
     }
+    
+    public function actionDelete()
+    {
+        $project_id = Yii::$app->request->post('project_id');
+        
+        // Проверка на лидерство над проектом
+        $project = \common\models\Project::findOne($project_id);
+        if($project->leader_id != Yii::$app->user->id){
+            return $this->redirect(['project/view', 'id' => $project_id]);
+        }
+        
+        $user_id =  Yii::$app->request->post('user_id');
+        
+        $member = Member::findOne(['user_id' => $user_id, 'project_id' => $project_id]);
+        
+        $member->delete();
+        return $this->redirect(['project/view', 'id' => $project_id]);
+    }
 
     /**
-     * Finds the Project model based on its primary key value.
+     * Finds the Member model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
-     * @return Project the loaded model
+     * @return Member the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findModel($id)
     {
-        if (($model = Project::findOne($id)) !== null) {
+        if (($model = Member::findOne($id)) !== null) {
             return $model;
         }
 

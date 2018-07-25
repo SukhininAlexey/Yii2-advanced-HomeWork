@@ -7,6 +7,7 @@ use yii\widgets\Pjax;
 /* @var $searchModel backend\models\ProjectSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
+
 $this->title = 'Projects';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -14,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-
+    
     <p>
         <?= Html::a('Create Project', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
