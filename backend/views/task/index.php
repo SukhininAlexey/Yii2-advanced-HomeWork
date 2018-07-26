@@ -15,28 +15,39 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
-    <p>
-        <?= Html::a('Create Task', ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
-
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
             'id',
-            'name',
+            [
+                'attribute'=>'name',
+                'format' => 'raw',
+                'value'=>function ($data) {
+                    return Html::a("$data->name", yii\helpers\Url::to(['task/view', 'id' => $data->id]), ['data-pjax' => 0]);
+                },
+            ],
             'description:ntext',
             'date',
-            'project_id',
+            ['label' => 'Project', 'attribute' => 'user_id', 'value' => 'project.name'],
+            /*
+            [
+                'label' => 'Project', 
+                'attribute' => 'projectName',
+                'format' => 'raw',
+                'value'=>function ($data) {
+                    return Html::a("$data->projectName", yii\helpers\Url::to(['project/view', 'id' => $data->project_id]), ['data-pjax' => 0]);
+                },
+            ],*/
             'deadline',
-            'user_id',
-            'leader_id',
-            'status_id',
+            ['label' => 'Owner', 'attribute' => 'userName'],
+            ['label' => 'Leader', 'attribute' => 'leaderName'],
+            ['label' => 'Status', 'attribute' => 'statusName'],
             //'resolve_date',
             
 
-            ['class' => 'yii\grid\ActionColumn'],
+            //['class' => 'yii\grid\ActionColumn'],
         ],
     ]); ?>
 </div>

@@ -13,6 +13,9 @@ return [
     'bootstrap' => ['log'],
     'modules' => [],
     'components' => [
+        'authManager' => [
+            'class' => yii\rbac\DbManager::class,
+        ],
         'view' => [
             'theme' => [
                 'pathMap' => [

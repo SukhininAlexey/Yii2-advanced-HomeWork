@@ -1,17 +1,16 @@
 <?php
 
-namespace backend\models;
+namespace frontend\models\task;
 
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use common\models\Project;
-use yii\helpers\ArrayHelper;
+use common\models\task\Task;
 
 /**
- * ProjectSearch represents the model behind the search form of `common\models\Project`.
+ * TaskSearch represents the model behind the search form of `common\models\task\Task`.
  */
-class ProjectSearch extends Project
+class TaskSearch extends Task
 {
     /**
      * {@inheritdoc}
@@ -19,9 +18,9 @@ class ProjectSearch extends Project
     public function rules()
     {
         return [
-            [['id', 'leader_id'], 'integer'],
+            [['id', 'status_id', 'user_id', 'leader_id', 'project_id'], 'integer'],
             [['description', 'name'], 'safe'],
-            [['date', 'estimated_end_date'], 'number'],
+            [['date', 'deadline', 'resolve_date'], 'number'],
         ];
     }
 
@@ -41,9 +40,9 @@ class ProjectSearch extends Project
      *
      * @return ActiveDataProvider
      */
-    public function search($params)
+    public function search($params, $projectId = null)
     {
-        $query = Project::find();
+        $query = Task::find();
 
         // add conditions that should always apply here
 
@@ -53,32 +52,35 @@ class ProjectSearch extends Project
 
         $this->load($params);
 
-        // Показываю только те проекты, которые имеют отношение к юзеру (лидершип, или участие)
+        // Показываю только те проекты, которые имеют отношение к проектам, к которым подтянут юзер
         $hostUser = Yii::$app->user->id;
         
-        $projsArray = \common\models\Member::getUserProjects($hostUser);
-        $projsIds = ArrayHelper::getColumn($projsArray, 'project_id');
-        
-        $query->orWhere([
+        // Ищем те задания, где юзер лидер, ответственный или где ID проекта соответствует тому, где мы есть
+        $query->where([
             'or',
             ['leader_id' => $hostUser],
-            ['id' => $projsIds],
+            ['user_id' => $hostUser],
+            ['project_id' => $projectId],
         ]);
-
         
         if (!$this->validate()) {
             // uncomment the following line if you do not want to return any records when validation fails
             $query->where('0=1');
             return $dataProvider;
         }
-        
-        
+
         // grid filtering conditions
+        // Если при вызове метода задан id проекта, то фильтравать по проектам нелья, т.к. мы в интерфейсе проекта
+        $whereProjId = $projectId ? $projectId : $this->project_id;
         $query->andFilterWhere([
             'id' => $this->id,
             'date' => $this->date,
-            'estimated_end_date' => $this->estimated_end_date,
+            'deadline' => $this->deadline,
+            'status_id' => $this->status_id,
+            'user_id' => $this->user_id,
             'leader_id' => $this->leader_id,
+            'resolve_date' => $this->resolve_date,
+            'project_id' => $whereProjId,
         ]);
 
         $query->andFilterWhere(['like', 'description', $this->description])

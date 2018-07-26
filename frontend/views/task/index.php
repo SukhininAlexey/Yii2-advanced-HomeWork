@@ -2,66 +2,52 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
-use yii\widgets\ActiveForm;
-use yii\helpers\Url;
 
 /* @var $this yii\web\View */
-/* @var $searchModel app\models\tables\TaskSearch */
+/* @var $searchModel frontend\models\task\TaskSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Tasks';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-
-
-
-<div class="task-form">
-
-<?php 
-
-echo \yii\helpers\Html::beginForm( Url::to(['task/index']), 'post');
-
-echo \yii\helpers\Html::textInput('date', null, ['type' => 'month']);
-
-echo \yii\helpers\Html::submitButton( \Yii::t('app', 'receive'), ['class' => 'btn btn-success']);
-
-echo \yii\helpers\Html::endForm();
-
-
-?>
-
-</div>
-
-
-
 <div class="task-index">
 
-<table class="table table-hover" style="width:100%; max-width:1200px">
-    
-    <tr>
-        <th class="text-center" style="width:150px"><?= \Yii::t('app', 'day') ?></th>
-        <th class="text-left"><?= \Yii::t('app', 'task') ?></th>
-        <th class="text-center" style="width:150px"><?= \Yii::t('app', 'quantity') ?></th>
-    </tr>
-    
-<?php foreach ($calendar as $day => $content): ?>
+    <h1><?= Html::encode($this->title) ?></h1>
+    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
-    <tr>
-        <td class="text-center"><?= $day ?></td>
-        <td class="text-left">
-    <?php  foreach ($calendar[$day] as $key => $task):?>
-            <p>
-                <a href="<?= Url::to(['task/single', 'taskId' => $calendar[$day][$key]->id]) ?>"><?= $calendar[$day][$key]->name ?></a>
-                - <?= $calendar[$day][$key]->description ?>
-            </p>
-    <?php endforeach;?>
-        </td>
-        <td class="text-center"><?= count($calendar[$day]) ?></td>
-    </tr>
-    
-    
+    <?= GridView::widget([
+        'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
+        'columns' => [
+            ['class' => 'yii\grid\SerialColumn'],
+            'id',
+            [
+                'attribute'=>'name',
+                'format' => 'raw',
+                'value'=>function ($data) {
+                    return Html::a("$data->name", yii\helpers\Url::to(['task/view', 'id' => $data->id]), ['data-pjax' => 0]);
+                },
+            ],
+            'description:ntext',
+            'date',
+            ['label' => 'Project', 'attribute' => 'user_id', 'value' => 'project.name'],
+            /*
+            [
+                'label' => 'Project', 
+                'attribute' => 'projectName',
+                'format' => 'raw',
+                'value'=>function ($data) {
+                    return Html::a("$data->projectName", yii\helpers\Url::to(['project/view', 'id' => $data->project_id]), ['data-pjax' => 0]);
+                },
+            ],*/
+            'deadline',
+            ['label' => 'Owner', 'attribute' => 'userName'],
+            ['label' => 'Leader', 'attribute' => 'leaderName'],
+            ['label' => 'Status', 'attribute' => 'statusName'],
+            //'resolve_date',
+            
 
-
-<?php endforeach;?>
-</table>
+            //['class' => 'yii\grid\ActionColumn'],
+        ],
+    ]); ?>
 </div>

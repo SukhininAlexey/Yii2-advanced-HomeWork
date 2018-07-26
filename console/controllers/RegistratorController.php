@@ -71,8 +71,21 @@ class RegistratorController extends Controller
         $am->addChild($user, $operationCheckTeam);
         $am->addChild($user, $operationCheckTask);
         $am->addChild($user, $operationResolveTask);
-
+        
+        $this->actionAssign();
         
         return ExitCode::OK;
+    }
+    
+    public function actionAssign(){
+        $am = \Yii::$app->authManager;
+        $admin = $am->getRole('admin');
+        $leader = $am->getRole('leader');
+        $user = $am->getRole('user');
+        
+        $am->assign($admin, 1);
+        $am->assign($leader, 2);
+        $am->assign($user, 3);
+        
     }
 }

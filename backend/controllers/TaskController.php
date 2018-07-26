@@ -11,6 +11,9 @@ use yii\filters\VerbFilter;
 use common\models\Member;
 use yii\helpers\ArrayHelper;
 use common\models\Project;
+use yii\filters\AccessControl;
+use common\models\task\TaskStatus;
+use yii\web\ForbiddenHttpException;
 
 /**
  * TaskController implements the CRUD actions for Task model.
@@ -23,6 +26,15 @@ class TaskController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['checkTask']
+                    ],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
@@ -57,18 +69,9 @@ class TaskController extends Controller
     {
         // Проверка на ПРИЧАСТНОСТЬ к действию
         $task = $this->findModel($id);
-        $hostUserId = Yii::$app->user->id;
-        $project = Project::findOne($task->project_id);
-        $member = Member::findOne([
-            'project_id' => $task->project_id, 
-            'user_id' => $hostUserId
-        ]);
-        if(
-                $task->leader_id != $hostUserId 
-                && $task->user_id != $hostUserId
-                && $project->leader_id != $hostUserId
-                && $member == null){
-            return $this->redirect(Yii::$app->request->referrer);
+        $permissions = $task->getPermissions();
+        if(!$permissions['view']){
+            throw new ForbiddenHttpException('This page is forbidden for you');
         }
         
         // Получаю необходимую информацию
@@ -102,6 +105,7 @@ class TaskController extends Controller
         
         return $this->render('view', [
             'model' => $task,
+            'permissions' => $permissions,
         ]);
     }
     
@@ -116,32 +120,33 @@ class TaskController extends Controller
         
         // Проверка на лидерство над проектом
         $project = \common\models\Project::findOne($project_id);
-        if($project->leader_id != Yii::$app->user->id){
-            return $this->redirect(['project/view', 'id' => $project_id]);
+        $permissions = $project->getPermissions();
+        if(!$permissions['addTask']){
+            throw new ForbiddenHttpException('This page is forbidden for you');
         }
         
         $model = new Task();
         
         $currentUserArr = Member::getProjCurrentUserArr($project_id);
-        
         $currentUserNames = ArrayHelper::map($currentUserArr, 'id', 'username');
         
-        // Id проекта жестко определен
-        $model->project_id = $project_id;
-        $model->leader_id = Yii::$app->user->id;
         
-        if (
-                $model->load(Yii::$app->request->post()) 
-                && $model->save() 
-                && ArrayHelper::keyExists($model->user_id, $currentUserNames
-            )) {
-
-            return $this->redirect(['project/view', 'id' => $project_id]);
+        
+        if ($model->load(Yii::$app->request->post())){
+            
+            // Id проекта жестко определен. Сначала подгружаем данные, потом подменяем целевые значения
+            $model->project_id = $project_id;
+            $model->leader_id = Yii::$app->user->id;
+            
+            if($model->save() && ArrayHelper::keyExists($model->user_id, $currentUserNames)){
+                return $this->redirect(['project/view', 'id' => $project_id]);
+            }
         }
 
         return $this->render('create', [
             'model' => $model,
             'currentUserNames' => $currentUserNames,
+            'permissions' => $permissions,
         ]);
     }
     
@@ -164,16 +169,17 @@ class TaskController extends Controller
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionUpdate($task_id, $project_id)
+    public function actionUpdate($id)
     {
-        // Проверка на лидерство над проектом
         
-        $project = \common\models\Project::findOne($project_id);
-        if($project->leader_id != Yii::$app->user->id){
-            return $this->redirect(['project/view', 'id' => $project_id]);
+        $model = $this->findModel($id);
+        $project_id = $model->project_id;
+        $permissions = $model->getPermissions();
+        
+        // Проверка на лидерство над проектом, , за которым закреплено действие
+        if(!$permissions['update']){
+            throw new ForbiddenHttpException('This page is forbidden for you');
         }
-        
-        $model = $this->findModel($task_id);
         
         $currentUserArr = Member::getProjCurrentUserArr($project_id);
         
@@ -181,30 +187,71 @@ class TaskController extends Controller
         
         
 
-        if ($model->load(Yii::$app->request->post()) && $model->save() && ArrayHelper::keyExists($model->user_id, $currentUserNames)) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->load(Yii::$app->request->post())) {
+            
+            // Важно, чтобы project_id не изменился при редактировании
+            $model->project_id = $project_id;
+            if($model->save() && ArrayHelper::keyExists($model->user_id, $currentUserNames)){
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
-
+        
+        $statuses = TaskStatus::getStatusesAssocArr();
+        
         return $this->render('update', [
             'model' => $model,
-            'currentUserNames' => $currentUserNames
+            'currentUserNames' => $currentUserNames,
+            'permissions' => $permissions,
+            'statuses' => $statuses,
         ]);
     }
-
     
+    public function actionResolve($id)
+    {
+        
+        $model = $this->findModel($id);
+        $project_id = $model->project_id;
+        $permissions = $model->getPermissions();
+        
+        // Проверка на лидерство над проектом, , за которым закреплено действие
+        if(!$permissions['resolve']){
+            throw new ForbiddenHttpException('This page is forbidden for you');
+        }
+        
+        $currentUserArr = Member::getProjCurrentUserArr($project_id);
+        $currentUserNames = ArrayHelper::map($currentUserArr, 'id', 'username');
+        
+        if($modelNew = Yii::$app->request->post('Task')){
+            
+            $model->status_id = $modelNew['status_id'];
+            if ($model->save() && ArrayHelper::keyExists($model->user_id, $currentUserNames)) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
+        }
+        
+        $statuses = TaskStatus::getStatusesAssocArr();
+
+        return $this->render('resolve', [
+            'model' => $model,
+            'currentUserNames' => $currentUserNames,
+            'permissions' => $permissions,
+            'statuses' => $statuses,
+        ]);
+    }
     
     public function actionDelete()
     {
+        
         $project_id = Yii::$app->request->post('project_id');
+        $task = findModel(Yii::$app->request->post('task_id'));
+        $permissions = $task->getPermissions();
+        
         // Проверка на лидерство над проектом
-        $project = \common\models\Project::findOne($project_id);
-        if($project->leader_id != Yii::$app->user->id){
-            return $this->redirect(['project/view', 'id' => $project_id]);
+        if(!$permissions['delete']){
+            throw new ForbiddenHttpException('This page is forbidden for you');
         }
         
-        $task_id =  Yii::$app->request->post('task_id');
-        
-        $this->findModel($task_id)->delete();
+        $task->delete();
 
         return $this->redirect(['project/view', 'id' => $project_id]);
     }

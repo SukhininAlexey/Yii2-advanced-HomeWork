@@ -1,17 +1,17 @@
 <?php
 
-namespace backend\controllers;
+namespace frontend\controllers;
 
 use Yii;
 use common\models\Project;
-use backend\models\ProjectSearch;
+use frontend\models\ProjectSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\web\ForbiddenHttpException;
 
-use backend\models\task\TaskSearch;
+use frontend\models\task\TaskSearch;
 
 /**
  * ProjectController implements the CRUD actions for Project model.
@@ -76,7 +76,7 @@ class ProjectController extends Controller
         $actionSearchModel = new TaskSearch();
         $actionDataProvider = $actionSearchModel->search(Yii::$app->request->queryParams, $id);
         
-        $userSearchModel = new \backend\models\TeamSearch();
+        $userSearchModel = new \frontend\models\TeamSearch();
         $userDataProvider = $userSearchModel->search(Yii::$app->request->queryParams, $id);
         
         return $this->render('view', [

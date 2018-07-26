@@ -60,6 +60,29 @@ class Project extends \yii\db\ActiveRecord
             'status_id' => 'Status ID',
         ];
     }
+    
+    public function getPermissions() {
+        
+        //$hostUserId = Yii::$app->user->id;
+        //$project_id = $this->project_id;
+        //$project = \common\models\Project::findOne($project_id);
+        $member = Member::findOne([
+            'project_id' => $this->id, 
+            'user_id' => Yii::$app->user->id,
+        ]);
+        
+        $leader = ($this->leader_id == Yii::$app->user->id);
+        $attend = $leader || $member;
+        
+        return [
+            'update' => $leader,
+            'delete' => $leader,
+            'addUser' => $leader,
+            'addTask' => $leader,
+            'expelUser' => $leader,
+            'view' => $attend,
+        ];
+    }
 
     /**
      * @return \yii\db\ActiveQuery

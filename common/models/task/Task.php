@@ -5,6 +5,7 @@ namespace common\models\task;
 use Yii;
 use \common\models\User;
 use \common\models\Project;
+use common\models\Member;
 
 
 /**
@@ -72,6 +73,28 @@ class Task extends \yii\db\ActiveRecord
             'project_id' => 'Project ID',
         ];
     }
+    
+    public function getPermissions() {
+        
+        $hostUserId = Yii::$app->user->id;
+        $project_id = $this->project_id;
+        $project = \common\models\Project::findOne($project_id);
+        $member = Member::findOne([
+            'project_id' => $project_id, 
+            'user_id' => $hostUserId,
+        ]);
+        
+        $leader = ($project->leader_id == Yii::$app->user->id);
+        $owner = ($this->user_id == Yii::$app->user->id);
+        $attend = $leader || $owner || $member;
+        
+        return [
+            'update' => $leader,
+            'delete' => $leader,
+            'resolve' => $owner,
+            'view' => $attend,
+        ];
+    }
 
     /**
      * @return \yii\db\ActiveQuery
@@ -79,6 +102,10 @@ class Task extends \yii\db\ActiveRecord
     public function getLeader()
     {
         return $this->hasOne(User::className(), ['id' => 'leader_id']);
+    }
+    
+    public function getLeaderName(){
+        return $this->leader->username;
     }
 
     /**
@@ -88,6 +115,10 @@ class Task extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Project::className(), ['id' => 'project_id']);
     }
+    
+    public function getProjectName(){
+        return $this->project->name;
+    }
 
     /**
      * @return \yii\db\ActiveQuery
@@ -96,6 +127,10 @@ class Task extends \yii\db\ActiveRecord
     {
         return $this->hasOne(TaskStatus::className(), ['id' => 'status_id']);
     }
+    
+    public function getStatusName(){
+        return $this->status->name;
+    }
 
     /**
      * @return \yii\db\ActiveQuery
@@ -103,5 +138,9 @@ class Task extends \yii\db\ActiveRecord
     public function getUser()
     {
         return $this->hasOne(User::className(), ['id' => 'user_id']);
+    }
+    
+    public function getUserName(){
+        return $this->user->username;
     }
 }
