@@ -1,23 +1,22 @@
 <?php
 
-use yii\widgets\ActiveForm;
-/** @var \app\models\tables\Task $model */
-
-echo '<h1>Создание нового задания</h1>';
-
-$form = ActiveForm::begin([
-    'id' => 'create_task',
-    'options' => [
-        'class' => 'form-vertical',
-    ]
-]);
+use yii\helpers\Html;
 
 
-echo $form->field($model, 'name')->textInput();
-echo $form->field($model, 'date')->textInput(['type' => 'date']);
-echo $form->field($model, 'description')->textArea();
-echo $form->field($model, 'user_id')->dropDownList(app\models\tables\User::getIdLoginArray());
-echo \yii\helpers\Html::submitButton("Создать",['class' => 'btn btn-success']);
+/* @var $this yii\web\View */
+/* @var $model common\models\task\Task */
 
-ActiveForm::end();
+$this->title = 'Create Task';
+$this->params['breadcrumbs'][] = ['label' => 'Tasks', 'url' => ['index']];
+$this->params['breadcrumbs'][] = $this->title;
+?>
+<div class="task-create">
 
+    <h1><?= Html::encode($this->title) ?></h1>
+
+    <?= $this->render('_form', [
+        'model' => $model,
+        'currentUserNames' => $currentUserNames,
+    ]) ?>
+
+</div>
